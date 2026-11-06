@@ -1,0 +1,71 @@
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: database
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: portfolio
+      POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
+      POSTGRES_DB: portfolio
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfolio -d portfolio"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: production
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://portfolio:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/portfolio
+      REDIS_URL: redis://redis:6379
+      PORT: 3000
+      NODE_ENV: production
+      SESSION_SECRET: ${SERVICE_PASSWORD_64_SESSION}
+      CORS_ORIGIN: ${SERVICE_URL_FRONTEND}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: production
+    restart: unless-stopped
+    expose:
+      - "80"
+    environment:
+      SERVICE_FQDN_FRONTEND: ${SERVICE_FQDN_FRONTEND}
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  redisdata:
