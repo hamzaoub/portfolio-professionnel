@@ -1,5 +1,7 @@
 services:
   postgres:
+    image: portfolio-professionnel-postgres:ae3bc0f
+    pull_policy: never
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -29,6 +31,8 @@ services:
       retries: 10
 
   backend:
+    image: portfolio-professionnel-backend:ae3bc0f
+    pull_policy: never
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -53,6 +57,8 @@ services:
       retries: 10
 
   frontend:
+    image: portfolio-professionnel-frontend:ae3bc0f
+    pull_policy: never
     build:
       context: .
       dockerfile: frontend/Dockerfile
