@@ -126,3 +126,11 @@ The interface uses React, React Router, and Tailwind CSS with Vite. The API uses
 The browser shows an HTML preview. The downloaded PDF uses the same profile data and selected content.
 
 The required application features are implemented. The [requirements matrix](docs/requirements-traceability.md) lists the remaining delivery and manual-review work. Optional extensions such as image uploads, certifications, analytics, a contact form, dark mode, bilingual UI, deployment, and DOCX/JSON Resume export are not part of this version. See the architecture document for cache and session behavior.
+
+## Production deployment
+
+`docker-compose.production.yml` uses a compiled Node.js API and a static Nginx frontend. PostgreSQL and Redis have persistent volumes and no published host ports. Nginx forwards `/api/` requests to the API, so the browser uses the same public origin for pages and sessions. Production session cookies require HTTPS.
+
+On Coolify, the application is configured under **hamza → Hamza CV → production**. Coolify generates the database password and session secret; these values are not stored in Git.
+
+The Linux amd64 images are available in the [production release](https://github.com/hamzaoub/portfolio-professionnel/releases/tag/portfolio-deploy-20261106). Load the archive with `docker load -i portfolio-images-linux-amd64.tar.gz` before deploying it. The deployment uses `docker compose config --quiet` as its build command and `docker compose up -d --no-build` as its start command, with the production Compose file selected. This avoids compilation on the small server. The Dockerfiles also retain the development targets used by the default Compose file.
